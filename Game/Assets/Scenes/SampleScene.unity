@@ -379,12 +379,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  initialJumpForce: 200
-  holdJumpForce: 35
-  maxJumpTime: 0.15
-  jumpTimeCounter: 0
-  moveDirection: 0
-  isJumping: 0
+  initialJumpForce: 10
+  holdJumpForce: 80
+  maxJumpTime: 0.1
+  maxClickTime: 0.1
+  gravityForce: 4
   isGrounded: 0
   playerRb: {fileID: 0}
   playerColider: {fileID: 0}
