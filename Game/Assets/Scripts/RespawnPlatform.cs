@@ -1,9 +1,10 @@
 using UnityEngine;
+using System.Collections;
 
 public class RespawnPlatform : MonoBehaviour
 {
-    public float breakDelay = 0.5f;
-    public float respawnDelay = 3f;
+    public float disappearTime = 1f;
+    public float respawnTime = 3f;
 
     private SpriteRenderer sr;
     private Collider2D col;
@@ -17,23 +18,17 @@ public class RespawnPlatform : MonoBehaviour
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Player"))
-        {
-            StartCoroutine(BreakAndRespawn());
-        }
+            StartCoroutine(DisappearAndRespawn());
     }
 
-    private System.Collections.IEnumerator BreakAndRespawn()
+    private IEnumerator DisappearAndRespawn()
     {
-        // 부서짐
+        yield return new WaitForSeconds(disappearTime);
         sr.enabled = false;
         col.enabled = false;
 
-        yield return new WaitForSeconds(respawnDelay);
-
-        // 재생성
+        yield return new WaitForSeconds(respawnTime);
         sr.enabled = true;
         col.enabled = true;
     }
 }
-
-//불투명하게

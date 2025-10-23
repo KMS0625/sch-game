@@ -248,52 +248,105 @@
 
 
 //양쪽에서 랜덤생성
+//using UnityEngine;
+
+//public class EnemyController : MonoBehaviour
+//{
+//    [Header("이동 설정")]
+//    public float moveSpeed = 2f;
+//    public float flyHeight = 3f;
+//    public float floatAmplitude = 0.3f;
+//    public float floatFrequency = 2f;
+
+//    private int direction = 1;
+//    private float lifetime = 10f;
+//    private float baseY;
+//    private SpriteRenderer spriteRenderer;
+
+//    void Start()
+//    {
+//        spriteRenderer = GetComponent<SpriteRenderer>();
+//        transform.position = new Vector3(transform.position.x, flyHeight, 0);
+//        baseY = transform.position.y;
+
+//        // 방향에 따라 스프라이트 반전
+//        spriteRenderer.flipX = (direction == -1);
+//    }
+
+//    void Update()
+//    {
+//        // 좌우 이동
+//        transform.Translate(Vector2.right * direction * moveSpeed * Time.deltaTime);
+
+//        // 위아래로 부드럽게 흔들림
+//        float offsetY = Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
+//        transform.position = new Vector3(transform.position.x, baseY + offsetY, transform.position.z);
+
+//        // Lifetime 종료 시 제거
+//        lifetime -= Time.deltaTime;
+//        if (lifetime <= 0f || transform.position.y < -5f)
+//            Destroy(gameObject);
+//    }
+
+//    // ✅ 외부에서 방향 지정할 수 있게 추가
+//    public void SetDirection(int dir)
+//    {
+//        direction = dir;
+//        if (spriteRenderer != null)
+//            spriteRenderer.flipX = (direction == -1);
+//    }
+
+//    void OnTriggerEnter2D(Collider2D other)
+//    {
+//        if (other.CompareTag("Player"))
+//        {
+//            Debug.Log("💥 Enemy hit Player!");
+//            PlayerHealth player = other.GetComponent<PlayerHealth>();
+//            if (player != null)
+//            {
+//                player.TakeDamage(1);
+//            }
+//            Destroy(gameObject);
+//        }
+//    }
+//}
+
+
 using UnityEngine;
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class EnemyController : MonoBehaviour
 {
-    [Header("이동 설정")]
     public float moveSpeed = 2f;
     public float flyHeight = 3f;
     public float floatAmplitude = 0.3f;
     public float floatFrequency = 2f;
+    public float knockbackForce = 5f; // 💥 플레이어 튕겨내는 힘
 
     private int direction = 1;
     private float lifetime = 10f;
     private float baseY;
-    private SpriteRenderer spriteRenderer;
 
     void Start()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
         transform.position = new Vector3(transform.position.x, flyHeight, 0);
         baseY = transform.position.y;
-
-        // 방향에 따라 스프라이트 반전
-        spriteRenderer.flipX = (direction == -1);
     }
 
     void Update()
     {
-        // 좌우 이동
         transform.Translate(Vector2.right * direction * moveSpeed * Time.deltaTime);
 
-        // 위아래로 부드럽게 흔들림
         float offsetY = Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
         transform.position = new Vector3(transform.position.x, baseY + offsetY, transform.position.z);
 
-        // Lifetime 종료 시 제거
         lifetime -= Time.deltaTime;
-        if (lifetime <= 0f || transform.position.y < -5f)
-            Destroy(gameObject);
+        if (lifetime <= 0f) Destroy(gameObject);
     }
 
-    // ✅ 외부에서 방향 지정할 수 있게 추가
     public void SetDirection(int dir)
     {
         direction = dir;
-        if (spriteRenderer != null)
-            spriteRenderer.flipX = (direction == -1);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -302,12 +355,24 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log("💥 Enemy hit Player!");
             PlayerHealth player = other.GetComponent<PlayerHealth>();
+
             if (player != null)
             {
                 player.TakeDamage(1);
             }
+
+            // 💥 플레이어 튕겨내기
+            Rigidbody2D rb = other.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                Vector2 knockbackDir = (other.transform.position - transform.position).normalized;
+                rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
+            }
+
             Destroy(gameObject);
         }
     }
 }
+
+
 
