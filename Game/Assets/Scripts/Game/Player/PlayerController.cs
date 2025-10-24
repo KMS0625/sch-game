@@ -3,44 +3,47 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Unity.VisualScripting;
-using UnityEditor.Callbacks;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Bool")]
     [SerializeField] private bool isSpriteLeft = false;
     private bool isGrounded = false;
     private bool isDashing = false;
-    private bool isInvicible = false;
     private bool canDoubleJump = false;
     private bool canDash = true;
+    private bool isStop = false;
 
+    [Header("Force")]
     [SerializeField] private float moveSpeed = 5.0f;
     [SerializeField] private float gravityForce = 4.0f;
     [SerializeField] private float JumpForce = 15.0f;
     [SerializeField] private float DoubleJumpForce = 13.0f;
-    [SerializeField] private float dashForce = 15.0f;
+    [SerializeField] private float dashForce = 10.0f;
 
+    [Header("Time")]
     [SerializeField] private float coyoteTime = 0.2f;
     [SerializeField] private float dashTime = 0.3f;
     [SerializeField] private float jumpBufferTime = 0.2f;
     [SerializeField] private float invicibletime = 2f;
     [SerializeField] private float dashCoolTime = 0.3f;
+    [SerializeField] private float startTime = 5f;
 
     private float jumpBufferCounter = 0f;
     private float coyoteTimeCounter = 0f;
 
+    [Header("Limit")]
     [SerializeField] private float fallLimit = -7f;
-    [SerializeField] private Vector2 spawnPosition;
 
-    [SerializeField] private int playerLife = 0;
+    [Header("Spawn")]
+    [SerializeField] private Vector2 spawnPosition = new Vector2(0, 0);
+    [SerializeField] private Vector2 platformPosition = new Vector2(0, -1);
+    [SerializeField] private GameObject spawnPlatform;
 
     private float facingDirection = 0f;
     private float moveDirection = 0f;
     private Color playerColor;
-
-    private GameObject respawnPlatform;
 
     public Rigidbody2D playerRb;
     public BoxCollider2D playerColider;
@@ -60,20 +63,15 @@ public class PlayerController : MonoBehaviour
 
         groundChecker = new GroundChecker(playerRb, playerColider);
 
-        respawnPlatform = GameObject.Find("Respawn Platform");
-        respawnPlatform.SetActive(false);
-
         playerRb.gravityScale = gravityForce;
         playerColor = playerRender.color;
-
-        GameManager.instance.UpdateLife(playerLife);
+        StartCoroutine(SpawnPlatform(startTime));
     }
-
 
     /* -------------------------------------------------------------------*/
     void Update()
     {
-        if (!GameManager.instance.checkGameStart())
+        if (!GameManager.instance.checkGameRun() || isStop)
         {
             return;
         }
@@ -143,7 +141,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!GameManager.instance.checkGameStart())
+        if (!GameManager.instance.checkGameRun() || isStop)
         {
             return;
         }
@@ -168,25 +166,39 @@ public class PlayerController : MonoBehaviour
     {
         if (playerRb.position.y < fallLimit)
         {
-            if (playerLife < 0)
+            GameManager.instance.LifeMinus();
+
+            if (GameManager.instance.checkGameRun())
             {
-                Die();
-            }
-            else
-            {
-                GameManager.instance.LifeMinus();
                 transform.position = spawnPosition;
+                StartCoroutine(SpawnPlatform(invicibletime));
                 StartCoroutine(Respawn());
             }
         }
     }
 
+    IEnumerator SpawnPlatform(float maxTime)
+    {
+        spawnPlatform.SetActive(true);
+        SpriteRenderer platformRender = spawnPlatform.GetComponent<SpriteRenderer>();
+
+        float blinkTimeCounter = 0f;
+        while (blinkTimeCounter < maxTime)
+        {
+            platformRender.color = new Color(1f, 1f, 1f, 0.5f);
+            yield return new WaitForSeconds(0.2f);
+            platformRender.color = new Color(1f, 1f, 1f, 1f);
+            yield return new WaitForSeconds(0.2f);
+            blinkTimeCounter += 0.3f;
+        }
+        spawnPlatform.SetActive(false);
+    }
+
     IEnumerator Respawn()
     {
-        isInvicible = true;
         gameObject.tag = "InvinciblePlayer";
+
         float invinvibleTimeCounter = 0f;
-        respawnPlatform.SetActive(true);
         while (invinvibleTimeCounter < invicibletime)
         {
             playerRender.color = new Color(1f, 1f, 1f, 0.5f);
@@ -195,13 +207,8 @@ public class PlayerController : MonoBehaviour
             yield return new WaitForSeconds(0.2f);
             invinvibleTimeCounter += 0.4f;
         }
-
-        isInvicible = false;
         gameObject.tag = "Player";
-
         playerRender.color = playerColor;
-        respawnPlatform.SetActive(false);
-
     }
 
     // 대쉬 함수
@@ -235,6 +242,18 @@ public class PlayerController : MonoBehaviour
         // 쿨타임 동안 대기 후 다시 대쉬 가능
         yield return new WaitForSeconds(dashCoolTime);
         canDash = true;
+    }
+
+    public void Stop()
+    {
+        StartCoroutine(StopCount());
+    }
+
+    IEnumerator StopCount()
+    {
+        isStop = true;
+        yield return new WaitForSeconds(0.5f);
+        isStop = false;
     }
 
     // 점프 시작 함수

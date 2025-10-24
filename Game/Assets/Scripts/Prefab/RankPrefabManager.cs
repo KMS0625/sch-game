@@ -1,4 +1,3 @@
-using Microsoft.Unity.VisualStudio.Editor;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,19 +15,19 @@ public class RankPrefabManager : MonoBehaviour
     [SerializeField] private Sprite bronze;
     [SerializeField] private Sprite egg;
 
-    public void setTropy(string troypyColor)
+    public void setTropy(int rank)
     {
         UnityEngine.UI.Image img = Tropy.GetComponent<UnityEngine.UI.Image>();
 
-        if (troypyColor == "gold")
+        if (rank == 1)
         {
             img.sprite = gold;
         }
-        else if (troypyColor == "silver")
+        else if (rank == 2)
         {
             img.sprite = silver;
         }
-        else if (troypyColor == "bronze")
+        else if (rank == 3)
         {
             img.sprite = bronze;
         }
@@ -38,14 +37,14 @@ public class RankPrefabManager : MonoBehaviour
         }
     }
 
-    public void setRankPrefab(int rank, string id, string name, string department, int score, string troypyColor)
+    public void setRankPrefab(int rank, string id, string name, string department, int score)
     {
         setRankText(rank);
         setIDText(id);
         setNameText(name);
         setDepartmentText(department);
         setScoreText(score);
-        setTropy(troypyColor);
+        setTropy(rank);
     }
 
     public void setRankText(int rank)

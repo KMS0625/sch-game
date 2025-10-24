@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 
 
-public class login : MonoBehaviour
+public class Login : MonoBehaviour
 {
     public enum LoginState
     {
@@ -21,29 +21,37 @@ public class login : MonoBehaviour
         AccountLocked
     };
 
+    [Header("Login Input Field")]
     public TMP_InputField inputLoginName;
     public TMP_InputField inputLoginID;
     public TMP_InputField inputLoginDepartment;
 
+    [Header("Signup Input Field")]
     public TMP_InputField inputSignupName;
     public TMP_InputField inputSingupID;
     public TMP_InputField inputSighupDpartment;
 
+    [Header("LoginPanel Button")]
     public Button loginButton;
     public Button CreateAccountButton;
 
+    [Header("Close Button")]
     public Button CloseLoginButton;
     public Button CloseSignupButton;
     public Button CloseRankingButton;
 
+    [Header("UI")]
     public GameObject loginPanel;
     public GameObject signupPanel;
     public GameObject mainPanel;
     public GameObject rankPanel;
+    public GameObject rulePanel;
 
+    [Header("Text")]
     public TextMeshProUGUI loginResult;
     public TextMeshProUGUI signupResult;
 
+    [Header("Ranking")]
     public GameObject rankPrefab;
     public Transform LeaderBoard;
 
@@ -80,7 +88,7 @@ public class login : MonoBehaviour
         }
         else if (response == LoginState.NameMismatch)
         {
-            loginResult.text = "비밀번호가 일치하지 않습니다!";
+            loginResult.text = "이름이 일치하지 않습니다!";
         }
         else if (response == LoginState.AccountLocked)
         {
@@ -162,8 +170,7 @@ public class login : MonoBehaviour
             return;
         }
 
-        bool access = await SupabaseClient.instance.Signup(name, id, department);
-
+        bool access = await SupabaseClient.instance.Signup(id, name, department);
         if (access)
         {
             signupPanel.SetActive(false);
@@ -187,32 +194,15 @@ public class login : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < users.Count; i++)
+
+        int count = users.Count >= 100 ? 100 : users.Count;
+        for (int i = 0; i < count; i++)
         {
             GameObject rankObj = Instantiate(rankPrefab, LeaderBoard);
-            String color = "";
             rankObj.name = $"rank_{i}";
 
             RankPrefabManager item = rankObj.GetComponent<RankPrefabManager>();
-
-            if (i == 0)
-            {
-                color = "gold";
-            }
-            else if (i == 1)
-            {
-                color = "silver";
-            }
-            else if (i == 2)
-            {
-                color = "bronze";
-            }
-            else
-            {
-                color = "none";
-            }
-
-            item.setRankPrefab(i + 1, users[i].id, users[i].name, users[i].department, users[i].highScore, color);
+            item.setRankPrefab(i + 1, users[i].id, users[i].name, users[i].department, users[i].high_score);
         }
     }
 
@@ -223,5 +213,17 @@ public class login : MonoBehaviour
 #else
             Application.Quit();
 #endif
+    }
+
+    public void OnRuleCloseButtonClick()
+    {
+        rulePanel.SetActive(false);
+        mainPanel.SetActive(true);
+    }
+
+    public void OnRuleButtonClick()
+    {
+        mainPanel.SetActive(false);
+        rulePanel.SetActive(true);
     }
 }

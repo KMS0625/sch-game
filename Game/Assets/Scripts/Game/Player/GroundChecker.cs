@@ -33,6 +33,7 @@ public class GroundChecker
 
         Debug.DrawRay(rightRayStart, Vector2.down * raycastDistance, Color.red, 0.1f);
         Debug.DrawRay(leftRayStart, Vector2.down * raycastDistance, Color.blue, 0.1f);
+
         if (rightHit.collider != null || leftHit.collider != null) // != null 체크가 명확합니다.
         {
             isGrounded = true;

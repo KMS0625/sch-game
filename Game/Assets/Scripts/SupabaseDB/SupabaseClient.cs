@@ -10,7 +10,7 @@ using System.Collections.Generic;
 [Table("User")]
 public class User : BaseModel
 {
-    [PrimaryKey("id", false)]
+    [PrimaryKey("id", true)]
     public string id { get; set; }
 
     [Column("name")]
@@ -25,7 +25,7 @@ public class User : BaseModel
 
     [Column("high_score")]
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-    public int highScore { get; set; }
+    public int high_score { get; set; }
 }
 
 public class SupabaseClient : MonoBehaviour
@@ -64,30 +64,30 @@ public class SupabaseClient : MonoBehaviour
         return userID;
     }
 
-    public async Task<login.LoginState> Login(string id, string name, string department)
+    public async Task<Login.LoginState> Login(string id, string name, string department)
     {
         var response = await client.From<User>().Where(x => x.id == id).Single();
 
         if (response == null)
         {
-            return login.LoginState.UserIdNotFound;
+            return global::Login.LoginState.UserIdNotFound;
         }
 
         if (response.department != department)
         {
-            return login.LoginState.DpartmentMisMatch;
+            return global::Login.LoginState.DpartmentMisMatch;
         }
         else if (response.name != name)
         {
-            return login.LoginState.NameMismatch;
+            return global::Login.LoginState.NameMismatch;
         }
         else if (response.remaining_plays <= 0)
         {
-            return login.LoginState.AccountLocked;
+            return global::Login.LoginState.AccountLocked;
         }
 
         SetUserID(id);
-        return login.LoginState.Success;
+        return global::Login.LoginState.Success;
     }
 
     public async Task<bool> Signup(string id, string name, string department)
@@ -116,22 +116,17 @@ public class SupabaseClient : MonoBehaviour
         string id = userID;
         var response = await client.From<User>().Where(x => x.id == id).Single();
 
-
-        if (response.highScore <= currentScore)
+        if (response.high_score < currentScore)
         {
-            var score = new User
-            {
-                id = id,
-                highScore = currentScore
-            };
-            await client.From<User>().Upsert(score, new QueryOptions { Returning = QueryOptions.ReturnType.Minimal });
+            response.high_score = currentScore;
+            await response.Update<User>();
         }
     }
 
     public async Task<List<User>> GetAllScore()
     {
         string selectColumns = "id, name, department, high_score";
-        var response = await client.From<User>().Select(selectColumns).Order("high_score", Postgrest.Constants.Ordering.Descending).Limit(100).Get();
+        var response = await client.From<User>().Select(selectColumns).Order("high_score", Postgrest.Constants.Ordering.Descending).Get();
 
         if (response.Models != null)
         {
@@ -140,6 +135,30 @@ public class SupabaseClient : MonoBehaviour
         else
         {
             return new List<User>();
+        }
+    }
+
+    public async void UpdateRemainingPlays()
+    {
+        var response = await client.From<User>().Where(x => x.id == userID).Select("remaining_plays").Single();
+        int currentReamining = response.remaining_plays;
+        currentReamining -= 1;
+        Debug.Log(currentReamining);
+
+        var update = await client.From<User>().Where(x => x.id == userID).Set(x => x.remaining_plays, currentReamining).Update();
+    }
+
+    public async Task<bool> checkRemainingPlays()
+    {
+        var response = await client.From<User>().Where(x => x.id == userID).Select("remaining_plays").Single();
+
+        if (response.remaining_plays > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }
